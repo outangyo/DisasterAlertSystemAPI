@@ -56,7 +56,7 @@ namespace DisasterAlertSystemAPI.Controllers
         [HttpGet]
         public IActionResult GetAllSettings()
         {
-            return Ok(_alertSettings);
+            return Ok(_appDbContext.alertSettings);
         }
     }
 }
