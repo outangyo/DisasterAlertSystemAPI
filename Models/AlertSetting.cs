@@ -3,7 +3,7 @@ using System.Threading;
 
 namespace DisasterAlertSystemAPI.Models
 {
-    public class AlertSettings
+    public class AlertSetting
     {
         public string RegionId { get; set; }
         public string DisasterTypes { get; set; }

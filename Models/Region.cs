@@ -1,6 +1,8 @@
-﻿namespace DisasterAlertSystemAPI.Models
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace DisasterAlertSystemAPI.Models
 {
-    public class Regions
+    public class Region
     {
         public string RegionId { get; set; }
         public LocationCoordinates LocationCoordinates { get; set; }
@@ -8,9 +10,10 @@
         public List<string> DisasterTypes { get; set; }
     }
 
+    [Owned]
     public class LocationCoordinates
     {
-        public double latitude { get; set; }
-        public double longitude { get; set; }
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
     }
 }

@@ -7,7 +7,16 @@ namespace DisasterAlertSystemAPI.Data
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-        public DbSet<Regions> regions { get; set; }
-        public DbSet<AlertSettings> alertSettings { get; set; }
+        public DbSet<Region> regions { get; set; }
+        public DbSet<AlertSetting> alertSettings { get; set; }
+        public DbSet<DisasterRisk> disasterRisks { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<Region>().HasKey(r => r.RegionId);
+            modelBuilder.Entity<AlertSetting>().HasKey(a => new { a.RegionId, a.DisasterTypes });
+            modelBuilder.Entity<DisasterRisk>().HasKey(d => new { d.RegionId, d.DisasterType });
+        }
     }
 }

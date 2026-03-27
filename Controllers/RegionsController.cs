@@ -1,6 +1,8 @@
-﻿using DisasterAlertSystemAPI.Models;
+﻿using DisasterAlertSystemAPI.Data;
+using DisasterAlertSystemAPI.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Data;
 
 namespace DisasterAlertSystemAPI.Controllers
 {
@@ -8,35 +10,43 @@ namespace DisasterAlertSystemAPI.Controllers
     [ApiController]
     public class RegionsController : ControllerBase
     {
-        private static readonly List<Regions> _regions = new List<Regions>()
+        private readonly AppDbContext _appDbContext;
+        private readonly ILogger<RegionsController> _logger;
+
+        public RegionsController(ILogger<RegionsController> logger, AppDbContext appDbContext)
         {
-            new Regions
-            {
-                RegionId = "R1",
-                LocationCoordinates = new LocationCoordinates { latitude = 13.7563, longitude = 100.5018 },
-                DisasterTypes = new List<string> { "Flood", "Earthquake" }
-            },
-            new Regions
-            {
-                RegionId = "R2",
-                LocationCoordinates = new LocationCoordinates { latitude = 18.7883, longitude = 98.9853 },
-                DisasterTypes = new List<string> { "Wildfire" }
-            }
-        };
+            _appDbContext = appDbContext;
+            _logger = logger;
+        }
 
         // POST /api/regions
         [HttpPost]
-        public IActionResult AddRegion([FromBody] Regions newRegion)
+        public IActionResult AddRegion([FromBody] Region newRegion)
         {
-            _regions.Add(newRegion);
+            try
+            {
+                _appDbContext.regions.Add(newRegion);
+                _appDbContext.SaveChanges();
 
-            return Ok(newRegion);
+                _logger.LogInformation($"Region {newRegion.RegionId} add success.");
+
+                return Ok(newRegion);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error adding is: {ex.Message}");
+
+                return StatusCode(500, "An error occurred while saving the region.");
+            }
+
         }
 
         [HttpGet]
         public IActionResult GetAllRegions()
         {
-            return Ok(_regions);
+            var regionsList = _appDbContext.regions.ToList();
+
+            return Ok(regionsList);
         }
     }
 }

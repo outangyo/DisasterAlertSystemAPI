@@ -15,7 +15,6 @@ namespace DisasterAlertSystemAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> GetWeather()
         {
-            // ลองใช้พิกัด bangkok
             double latitude = 13.7563;
             double longitude = 100.5018;
 
