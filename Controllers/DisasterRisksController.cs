@@ -28,38 +28,72 @@ namespace DisasterAlertSystemAPI.Controllers
         {
             try
             {
-                var regions = _appDbContext.regions.ToList();
+                var regions = await _appDbContext.regions.ToListAsync();
                 var result = new List<DisasterRisk>();
+
+                // Error Handling Regions with no available data
+                if (regions == null || !regions.Any())
+                {
+                    _logger.LogWarning("No regions found in the database.");
+                    return NotFound("No regions found.");
+                }
 
                 foreach (var region in regions)
                 {
-                    string weatherUrl = $"https://api.openweathermap.org/data/2.5/weather?lat={region.LocationCoordinates.Latitude}" +
-                        $"&lon={region.LocationCoordinates.Longitude}" +
-                        $"&appid={_apiKeyFromOpenWeather}&units=metric";
-
-                    var weatherResponse = await _httpClient.GetAsync(weatherUrl);
-
-                    if (!weatherResponse.IsSuccessStatusCode) continue;
-
-                    var weatherJson = await weatherResponse.Content.ReadAsStringAsync();
-                    var weather = JsonSerializer.Deserialize<WeatherResponse>(weatherJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
+                    WeatherResponse weather = null;
                     EarthquakeResponse earthquakeData = null;
+
+                    try
+                    {
+                        string weatherUrl = $"https://api.openweathermap.org/data/2.5/weather?lat={region.LocationCoordinates.Latitude}" +
+                       $"&lon={region.LocationCoordinates.Longitude}" +
+                       $"&appid={_apiKeyFromOpenWeather}&units=metric";
+
+                        var weatherResponse = await _httpClient.GetAsync(weatherUrl);
+
+                        // Error Handling for external api OpenWeather
+                        if (!weatherResponse.IsSuccessStatusCode)
+                        {
+                            _logger.LogError($"Failed to get weather data from OpenWeather: {region.RegionId}");
+                            continue; // เพื่อให้โปรเเกรมทำงานต่อ
+                        }
+
+                        var weatherJson = await weatherResponse.Content.ReadAsStringAsync();
+                        weather = JsonSerializer.Deserialize<WeatherResponse>(weatherJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"Network Error getting OpenWeather for {region.RegionId}: {ex.Message}");
+                        continue;
+                    }
 
                     if (region.DisasterTypes.Any(t => t.ToLower() == "earthquake"))
                     {
-                        string earthquakeUrl = $"https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&latitude={region.LocationCoordinates.Latitude}&longitude={region.LocationCoordinates.Longitude}&maxradiuskm=100&limit=1";
-                        var earthquakeResponse = await _httpClient.GetAsync(earthquakeUrl);
-
-                        if (earthquakeResponse.IsSuccessStatusCode)
+                        try
                         {
-                            var earthquakeJson = await earthquakeResponse.Content.ReadAsStringAsync();
-                            earthquakeData = JsonSerializer.Deserialize<EarthquakeResponse>(earthquakeJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                            string earthquakeUrl = $"https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&latitude={region.LocationCoordinates.Latitude}&longitude={region.LocationCoordinates.Longitude}&maxradiuskm=100&limit=1";
+                            var earthquakeResponse = await _httpClient.GetAsync(earthquakeUrl);
+
+                            // Error Handling for external api USGS
+                            if (!earthquakeResponse.IsSuccessStatusCode)
+                            {
+                                _logger.LogWarning($"Failed to get earthquake data from USGS: {region.RegionId}.");
+                            }
+                            else
+                            {
+                                var earthquakeJson = await earthquakeResponse.Content.ReadAsStringAsync();
+                                earthquakeData = JsonSerializer.Deserialize<EarthquakeResponse>(earthquakeJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning($"Network Error getting USGS for {region.RegionId}: {ex.Message}");
                         }
                     }
 
                     foreach (var type in region.DisasterTypes)
                     {
+                        // Error Handling Missing data from external sources
                         int score = DisasterRiskService.CalculateScore(type, weather, earthquakeData);
                         var setting = _appDbContext.alertSettings.FirstOrDefault(s => s.RegionId == region.RegionId && s.DisasterTypes == type);
 
