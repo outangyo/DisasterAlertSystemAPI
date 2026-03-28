@@ -4,6 +4,8 @@ using DisasterAlertSystemAPI.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 
 namespace DisasterAlertSystemAPI.Controllers
@@ -14,13 +16,16 @@ namespace DisasterAlertSystemAPI.Controllers
     {
         private readonly AppDbContext _appDbContext;
         private readonly ILogger<DisasterRisksController> _logger;
-        private readonly HttpClient _httpClient = new HttpClient();
+        private readonly HttpClient _httpClient;
         private readonly string _apiKeyFromOpenWeather = "a54601777fb0a91a23ddd75b05270386";
+        private readonly IDistributedCache _cache;
 
-        public DisasterRisksController(ILogger<DisasterRisksController> logger, AppDbContext appDbContext)
+        public DisasterRisksController(ILogger<DisasterRisksController> logger, AppDbContext appDbContext, IDistributedCache distributedCache, HttpClient httpClient)
         {
             _appDbContext = appDbContext;
             _logger = logger;
+            _httpClient = httpClient;
+            _cache = distributedCache;
         }
 
         [HttpGet]
@@ -28,6 +33,18 @@ namespace DisasterAlertSystemAPI.Controllers
         {
             try
             {
+                // Redis Cache check ว่ามีข้อมูลใน cache
+                string cacheKey = "RiskAssessmentData";
+                var cachedData = await _cache.GetStringAsync(cacheKey);
+
+                if (!string.IsNullOrEmpty(cachedData))
+                {
+                    _logger.LogInformation("Data From Cache success");
+                    // ถ้าเจอข้อมูลใน Cache ให้แปลงรเป็น List แล้ว Return
+                    var cachedRisks = JsonSerializer.Deserialize<List<DisasterRisk>>(cachedData);
+                    return Ok(cachedRisks);
+                }
+
                 var regions = await _appDbContext.regions.ToListAsync();
                 var result = new List<DisasterRisk>();
 
@@ -112,6 +129,18 @@ namespace DisasterAlertSystemAPI.Controllers
                         result.Add(risk);
                     }
                 }
+                // Redis Cache
+                var cacheOptions = new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(15)
+                };
+
+                // แปลง result เป็น JSON แล้วเซฟลง Redis
+                string serializedResult = JsonSerializer.Serialize(result);
+                await _cache.SetStringAsync(cacheKey, serializedResult, cacheOptions);
+
+                _logger.LogInformation("Data Save Success in redis");
+
                 return Ok(result);
             }
             catch (Exception ex)
