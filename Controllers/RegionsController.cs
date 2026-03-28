@@ -28,7 +28,7 @@ namespace DisasterAlertSystemAPI.Controllers
                 _appDbContext.regions.Add(newRegion);
                 _appDbContext.SaveChanges();
 
-                _logger.LogInformation($"Region {newRegion.RegionId} add success.");
+                _logger.LogInformation($"Region {newRegion.RegionId} Save success.");
 
                 return Ok(newRegion);
             }
