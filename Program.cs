@@ -1,6 +1,8 @@
 using DisasterAlertSystemAPI.Data;
 using DisasterAlertSystemAPI.Services;
 using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
+using Azure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +22,12 @@ builder.Services.AddStackExchangeRedisCache(options =>
 });
 
 var app = builder.Build();
+// ใช้เพื่อ migrate database ตอนเริ่มต้นเเอพ
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    //db.Database.Migrate();
+}
 
 // Configure the HTTP request pipeline.
 

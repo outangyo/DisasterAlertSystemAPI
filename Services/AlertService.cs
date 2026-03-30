@@ -9,10 +9,10 @@
             _logger = logger;
         }
 
-        public async Task<bool> SendAlertAsync(string to, string message)
+        public async Task<bool> SendAlertAsync(string phoneNumber, string message)
         {
             // จำลองการพ่น Log ออก Console
-            _logger.LogWarning($"[MOCK SMS/EMAIL] Sending alert to {to}... Message: {message}");
+            _logger.LogWarning($"[MOCK SMS/EMAIL] Sending alert to {phoneNumber}... Message: {message}");
 
             return true;
         }

@@ -140,7 +140,7 @@ namespace DisasterAlertSystemAPI.Controllers
                 await _cache.SetStringAsync(cacheKey, serializedResult, cacheOptions);
 
                 _logger.LogInformation("Data Save Success in redis");
-
+                
                 return Ok(result);
             }
             catch (Exception ex)

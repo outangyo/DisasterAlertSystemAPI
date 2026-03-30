@@ -1,0 +1,20 @@
+{
+  "dependencies": {
+    "mssql1": {
+      "serviceConnectorResourceId": "/subscriptions/[parameters('subscriptionId')]/resourcegroups/[parameters('serviceConnectorResourceGroupName')]/providers/Microsoft.Web/sites/DisasterAlertSystemAPI-PK/providers/Microsoft.ServiceLinker/linkers/ConnectionStringsDefaultConnection_A40DDEBA7D",
+      "secretStore": "AzureAppSettings",
+      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.Sql/servers/disasteralertsystemapidbserver/databases/DisasterAlertSystemAPI_db",
+      "type": "mssql.azure",
+      "connectionId": "ConnectionStrings:DefaultConnection",
+      "dynamicId": null
+    },
+    "redis1": {
+      "serviceConnectorResourceId": "/subscriptions/[parameters('subscriptionId')]/resourcegroups/[parameters('serviceConnectorResourceGroupName')]/providers/Microsoft.Web/sites/DisasterAlertSystemAPI-PK/providers/Microsoft.ServiceLinker/linkers/ConnectionStringsredis_8B77FD7EA7",
+      "secretStore": "AzureAppSettings",
+      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.Cache/Redis/DisasterAlertSystemAPIcache",
+      "type": "redis.azure",
+      "connectionId": "ConnectionStrings:redis",
+      "dynamicId": null
+    }
+  }
+}

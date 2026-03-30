@@ -25,9 +25,8 @@ namespace DisasterAlertSystemAPI.Controllers
         [HttpPost("send")]
         public async Task<IActionResult> SendAlert([FromBody] AlertData request)
         {
-            // เบอร์จำลอง
+            // เบอร์มือถือจำลอง
             string phoneNumber = "+66123456789";
-
             try
             {
                 // เรียกใช้งานตรงๆ
