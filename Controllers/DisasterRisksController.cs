@@ -57,7 +57,7 @@ namespace DisasterAlertSystemAPI.Controllers
 
                 foreach (var region in regions)
                 {
-                    WeatherResponse weather = null;
+                    WeatherResponse weatherData = null;
                     EarthquakeResponse earthquakeData = null;
 
                     try
@@ -76,7 +76,7 @@ namespace DisasterAlertSystemAPI.Controllers
                         }
 
                         var weatherJson = await weatherResponse.Content.ReadAsStringAsync();
-                        weather = JsonSerializer.Deserialize<WeatherResponse>(weatherJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                        weatherData = JsonSerializer.Deserialize<WeatherResponse>(weatherJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                     }
                     catch (Exception ex)
                     {
@@ -111,7 +111,7 @@ namespace DisasterAlertSystemAPI.Controllers
                     foreach (var type in region.DisasterTypes)
                     {
                         // Error Handling Missing data from external sources
-                        int score = DisasterRiskService.CalculateScore(type, weather, earthquakeData);
+                        int score = DisasterRiskService.CalculateScore(type, weatherData, earthquakeData);
                         var setting = _appDbContext.alertSettings.FirstOrDefault(s => s.RegionId == region.RegionId && s.DisasterTypes == type);
 
                         // ใช้ค่า default หรือปรับค่าได้
